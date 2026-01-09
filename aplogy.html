@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magical Flowing Heart 💖</title>
+<style>
+  body {
+    margin: 0;
+    background: rgb(255, 255, 255);
+    font-family: "Helvetica", sans-serif;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  h1, h2 {
+    margin: 20px;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 3px solid purple; /* typing cursor */
+  }
+  h1 { font-size: 2.5rem; color: purple; }
+  h2 { font-size: 1.5rem; color: purple; }
+
+  .hidden { display: none; }
+
+  #message {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #A64AC9;
+    font-size: 1.5rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 10;
+  }
+  #forgiveBtn {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    padding: 10px 20px;
+    background-color: purple;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: none;
+    z-index: 10;
+  }
+  #forgiveBtn:hover { transform: translateX(-50%) scale(1.1); }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<h1 id="label1"></h1>
+<h2 id="label2"></h2>
+<canvas id="heartCanvas"></canvas>
+<div id="message">U are my cute cute cute little baby💖</div>
+<button id="forgiveBtn">U love?</button>
+
+<script>
+const label1 = document.getElementById('label1');
+const label2 = document.getElementById('label2');
+const message = document.getElementById('message');
+const button = document.getElementById('forgiveBtn');
+const canvas = document.getElementById('heartCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Typing animation
+const text1 = "I'm Sorry 💔";
+const text2 = "MyCuteLittleBaby";
+let index1 = 0;
+let index2 = 0;
+let typingDone = false;
+
+function typeLabel1() {
+    if(index1 < text1.length){
+        label1.textContent += text1[index1];
+        index1++;
+        setTimeout(typeLabel1, 150);
+    } else {
+        label1.style.borderRight = "none";
+        typeLabel2();
+    }
+}
+
+function typeLabel2() {
+    if(index2 < text2.length){
+        label2.textContent += text2[index2];
+        index2++;
+        setTimeout(typeLabel2, 150);
+    } else {
+        label2.style.borderRight = "none";
+        typingDone = true; // enable click to start heart
+    }
+}
+
+typeLabel1(); // start typing on page load
+
+// Heart flow animation
+let sparkles = [];
+const sparkleCount = 200;
+let heartX = canvas.width / 2;
+let heartY = canvas.height / 2;
+let angle = 0;
+let beat = 0;
+
+function heartPoint(t, scale=25, offsetX=0, offsetY=0){
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+    return { x: offsetX + x*scale, y: offsetY - y*scale };
+}
+
+function spawnSparkle(scale) {
+    const t = Math.random() * Math.PI * 2;
+    const pt = heartPoint(t, scale, heartX, heartY);
+    return {
+        x: pt.x,
+        y: pt.y,
+        size: Math.random()*2 + 1,
+        speedX: (Math.random()-0.5)*2,
+        speedY: (Math.random()-0.5)*2,
+        alpha: 1
+    };
+}
+
+for(let i=0; i<sparkleCount; i++){
+    sparkles.push({x:0,y:0,size:0,speedX:0,speedY:0,alpha:0});
+}
+
+function drawHeart() {
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+
+    angle += 0.002;
+    heartX = canvas.width/2 + Math.sin(angle)*200;
+    heartY = canvas.height/2 + Math.cos(angle)*100;
+
+    beat += 0.05;
+    const scale = 25 + Math.sin(beat)*8;
+
+    for(let t=0; t<Math.PI*2; t+=0.02){
+        const p = heartPoint(t, scale, heartX, heartY);
+        ctx.beginPath();
+        ctx.arc(p.x + Math.sin(beat*3)*5, p.y + Math.cos(beat*3)*5, 3, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(166,74,201,0.9)';
+        ctx.shadowColor = 'rgba(166,74,201,0.8)';
+        ctx.shadowBlur = 15;
+        ctx.fill();
+    }
+
+    // Draw sparkles (purple)
+    for(let i=0; i<sparkleCount; i++){
+        let s = sparkles[i];
+        if(s.alpha <= 0){
+            sparkles[i] = spawnSparkle(scale);
+            s = sparkles[i];
+        }
+        s.x += s.speedX;
+        s.y += s.speedY;
+        s.alpha -= 0.02;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(166,74,201,${s.alpha})`;
+        ctx.fill();
+    }
+
+    requestAnimationFrame(drawHeart);
+}
+
+// Click handler to start heart animation
+function handleClick() {
+    if(!typingDone) return; // ignore clicks while typing
+
+    label1.classList.add('hidden');
+    label2.classList.add('hidden');
+
+    canvas.style.opacity = 1;
+    drawHeart();
+
+    message.style.opacity = 1;
+    button.style.display = 'block';
+
+    document.body.removeEventListener('click', handleClick); // remove after first click
+}
+
+document.body.addEventListener('click', handleClick);
+
+// Forgive button
+function forgive(){
+    button.textContent = "U Love?";
+    button.style.backgroundColor = "purple";
+    message.textContent = "SABA💖😭"; // crying emoji
+}
+
+button.addEventListener('click', forgive);
+
+</script>
+</body>
+</html>
